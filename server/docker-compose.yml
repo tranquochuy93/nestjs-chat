@@ -1,0 +1,55 @@
+version: '3.3'
+services:
+  redis:
+    image: redis:latest
+    ports:
+      - ${REDIS_PORT}:6379
+    networks:
+      - webnet
+  mongo:
+    image: mongo:latest
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
+      MONGO_INITDB_DATABASE: ${MONGO_DATABASE}
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongodb_data_container:/data/db
+    networks:
+      - mongo-compose-network
+  mongo-express:
+    image: mongo-express
+    restart: always
+    environment:
+      - ME_CONFIG_MONGODB_SERVER=mongo
+      # - ME_CONFIG_MONGODB_PORT=27017
+      # - ME_CONFIG_MONGODB_AUTH_USERNAME=${MONGO_USERNAME}
+      # - ME_CONFIG_MONGODB_AUTH_PASSWORD=${MONGO_PASSWORD}
+      - ME_CONFIG_MONGODB_ADMINUSERNAME=${MONGO_USERNAME}
+      - ME_CONFIG_MONGODB_ADMINPASSWORD=${MONGO_PASSWORD}
+      # - ME_CONFIG_MONGODB_ENABLE_ADMIN=false
+      # - ME_CONFIG_MONGODB_AUTH_DATABASE=admin
+      - ME_CONFIG_MONGODB_URL=mongodb://${MONGO_USERNAME}:${MONGO_PASSWORD}@mongo:27017/
+      # - ME_CONFIG_MONGODB_AUTH_USERNAME=${MONGO_USERNAME}
+      # - ME_CONFIG_MONGODB_AUTH_PASSWORD=${MONGO_PASSWORD}
+      - ME_CONFIG_BASICAUTH_USERNAME=${MONGO_USERNAME}
+      - ME_CONFIG_BASICAUTH_PASSWORD=${MONGO_PASSWORD}
+    depends_on:
+      - mongo
+    links:
+      - mongo
+    ports:
+      - "8888:8081"
+    networks:
+      - mongo-compose-network
+
+networks:
+  mongo-compose-network:
+    driver: bridge
+  webnet:
+    driver: bridge
+
+volumes:
+  mongodb_data_container:
